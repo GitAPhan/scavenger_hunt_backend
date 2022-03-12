@@ -1,5 +1,5 @@
 import mariadb as db
-import dbcreds as c
+import dbinteractions.dbcreds as c
 
 # connect to database function
 def connect_db():
@@ -31,3 +31,4 @@ def disconnect_db(conn, cursor):
     except Exception as e:
         print(e)
         print("Db Connection Error: conn close error")
+
