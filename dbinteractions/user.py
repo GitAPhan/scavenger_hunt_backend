@@ -58,12 +58,19 @@ def post(username, password, salt, email, is_over_13, name=None):
         )
         conn.commit()
         user_id = cursor.lastrowid
-    except Exception as E:
-            # NEED EXCEPTIONS
-        print(E)
-        print(is_over_13)
+    except db.DatabaseError as DE:
+        response = Response('de'+str(DE), mimetype='plain/text', status=400)
+    except db.IntegrityError as IE:
+        response = Response('ie'+str(IE), mimetype='plain/text', status=400)
+    # except Exception as E:
+    #         # NEED EXCEPTIONS
+    #     print(E)
+    #     print(is_over_13)
 
     c.disconnect_db(conn, cursor)
+
+    if response != None:
+        return response
 
     return Response(user_id, mimetype="plain/text", status=201)
 

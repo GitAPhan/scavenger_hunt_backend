@@ -33,21 +33,23 @@ def post():
     keyname = {
         1: 'username',
         2: 'email',
-        3: 'over13',
+        3: 'isOver13',
         4: 'password',
-        5: 'display_name',
+        5: 'displayName',
         6: 'salt'
     }
 
     for i in range(1,6):
         try:
             keyvalue[keyname[i]] = request.json[keyname[i]]
-        except KeyError:
+        except KeyError as ke:
+            print(ke)
             if i == 5:
                 i = 4
                 pass
             else:
                 return Response("KeyError: '"+keyname[i]+"' keyname not present", mimetype="plain/text", status=500)
+        
         # more exceptions needed
     
     # hash password
