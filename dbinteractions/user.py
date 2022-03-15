@@ -21,6 +21,7 @@ def get(user_id):
         )
         users = cursor.fetchall()
     except Exception as e:
+            # NEED EXCEPTIONS
         print(e)
 
     c.disconnect_db(conn, cursor)
@@ -43,7 +44,7 @@ def get(user_id):
 
 
 # POST user to database
-def post(username, password, salt, email, birthdate, name=None):
+def post(username, password, salt, email, is_over_13, name=None):
     response = None
     user_id = None
 
@@ -52,20 +53,24 @@ def post(username, password, salt, email, birthdate, name=None):
     try:
         # query to create new user
         cursor.execute(
-            "INSERT INTO user (username, password, salt, email, birthdate, name) VALUE (?,?,?,?,?,?)",
-            [username, password, salt, email, birthdate, name],
+            "INSERT INTO user (username, password, salt, email, is_over_13, name) VALUE (?,?,?,?,?,?)",
+            [username, password, salt, email, is_over_13, name],
         )
         conn.commit()
         user_id = cursor.lastrowid
     except Exception as E:
+            # NEED EXCEPTIONS
         print(E)
+        print(is_over_13)
 
     c.disconnect_db(conn, cursor)
+
+    return Response(user_id, mimetype="plain/text", status=201)
 
     if user_id != None:
         # format response
         response = format.user(
-            [user_id, username, name, email, birthdate, datetime.datetime.now()]
+            [user_id, username, name, email, is_over_13, datetime.datetime.now()]
         )
         response_json = json.dumps(response, default=str)
         response = Response(response_json, mimetype="application/json", status=201)
@@ -116,6 +121,7 @@ def patch(user_id, username=None, email=None, birthdate=None, name=None):
                 status=400,
             )
     except KeyError:
+            # NEED EXCEPTIONS
         response = Response("bad bad bad", mimetype="plain/text", status=499)
 
     # return any value for response that is not None
@@ -145,6 +151,7 @@ def delete(user_id):
                 status=400,
             )
     except KeyError:
+            # NEED EXCEPTIONS
         response = Response("BAD BAD BAD", mimetype="plain/text", status=499)
 
     c.disconnect_db(conn, cursor)
@@ -156,3 +163,25 @@ def delete(user_id):
     return Response(
         "user has been successfully deleted", mimetype="plain/text", status=200
     )
+
+# GET username - check availability
+def check(username):
+    response = None
+
+    conn, cursor = c.connect_db()
+
+    try:
+        # query to grab username
+        cursor.execute("SELECT COUNT(id) FROM user WHERE username = ?", [username])
+        status = cursor.fetchone()[0]
+        if status != 0:
+            response = Response('username is not available', mimetype='plain/text', status=400)
+    except KeyError:
+        response = 'Response'
+    
+    c.disconnect_db(conn, cursor)
+
+    if response != None:
+        return response
+    
+    return Response("username is available", mimetype='plain/text', status=200)
