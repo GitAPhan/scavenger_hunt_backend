@@ -46,6 +46,53 @@ def password(hashed_salty_password, salt, password):
         return False
 
 
+
+
+
+# grab hashed_password and salt from database to be verified
+def get_hashpass(payload, type):
+    conn, cursor = connect_db()
+    result = None
+
+    # modify query
+    choices = {
+        "loginToken": "l.login_token",
+        "username": "u.username",
+        "email": "u.email",
+    }
+    query_selector = choices[type]
+    # conditional to remove innerjoin if user enters email or username
+    query_innerjoin = "inner join login l on l.user_id = u.id"
+    if type != "loginToken":
+        query_innerjoin = ""
+    query_statement = f"select u.password, u.salt, u.id from user u {query_innerjoin} where {query_selector} = ?"
+
+    try:
+        cursor.execute(query_statement, [payload])
+        result = cursor.fetchone()
+    except Exception as E:
+        return Response(
+            "DB Auth Error: GET cred -" + str(E), mimetype="plain/text", status="401"
+        )
+
+    disconnect_db(conn, cursor)
+
+    if result == None:
+        return (
+            False,
+            Response(
+                "USER: invalid authentication - 'loginToken' not found",
+                mimetype="plain/text",
+                status=401,
+            ),
+            None,
+        )
+    else:
+        return result[0], result[1], result[2]
+
+
+## TOKEN VILLE ##
+
 # verify temp token
 def tempToken(temp_token, login_id, user_id):
     response = None
@@ -59,7 +106,7 @@ def tempToken(temp_token, login_id, user_id):
         status = cursor.fetchall()[0]
         # status check
         if status[0] != 1:
-            response = Response("unable to verify login session", mimetype="plain/text", status=403)
+            response = Response("unauthorized operation", mimetype="plain/text", status=403)
     except KeyError:
         response = 'response'
 
@@ -112,44 +159,29 @@ def loginToken(loginToken):
     disconnect_db(conn, cursor)
     return user, verify_status
 
+# verify gameToken is valid
+def gameToken(gameToken):
+    response = None
+    isValid = None
 
-# grab hashed_password and salt from database to be verified
-def get_hashpass(payload, type):
     conn, cursor = connect_db()
-    result = None
-
-    # modify query
-    choices = {
-        "loginToken": "l.login_token",
-        "username": "u.username",
-        "email": "u.email",
-    }
-    query_selector = choices[type]
-    # conditional to remove innerjoin if user enters email or username
-    query_innerjoin = "inner join login l on l.user_id = u.id"
-    if type != "loginToken":
-        query_innerjoin = ""
-    query_statement = f"select u.password, u.salt, u.id from user u {query_innerjoin} where {query_selector} = ?"
 
     try:
-        cursor.execute(query_statement, [payload])
-        result = cursor.fetchone()
-    except Exception as E:
-        return Response(
-            "DB Auth Error: GET cred -" + str(E), mimetype="plain/text", status="401"
-        )
-
+        # query to select game_id & game_name
+        cursor.execute("SELECT id, name FROM game where game_token=?", [gameToken])
+        isValid = cursor.fetchall()[0]
+        #status check
+        if not isinstance(isValid[0], int):
+            response = Response("token is non-existant", mimetype="plain/text", status=404)
+    except KeyError:
+        response = "Response"
+    
     disconnect_db(conn, cursor)
 
-    if result == None:
-        return (
-            False,
-            Response(
-                "USER: invalid authentication - 'loginToken' not found",
-                mimetype="plain/text",
-                status=401,
-            ),
-            None,
-        )
-    else:
-        return result[0], result[1], result[2]
+    if response != None:
+        return False, response
+    if isValid != None:
+        # return game_id, game_name
+        return isValid[0], isValid[1]
+    # catch
+    return False, Response("VerifyError: GAME_TOKEN - catch error", mimetype="plain/text", status=499)

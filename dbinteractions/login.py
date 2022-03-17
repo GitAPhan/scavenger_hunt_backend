@@ -50,9 +50,8 @@ def patch(game_id, username, user_id, temp_token, login_id, game_name, game_toke
         query_keyname = 'master_token'
     else:
         query_keyname = 'player_token'
-
     query_statement = f"UPDATE login SET game_id=?, login_token=?, {query_keyname}=? WHERE user_id=? AND id=? AND login_token=?"
-
+    
     conn, cursor = c.connect_db()
 
     try:
@@ -72,10 +71,16 @@ def patch(game_id, username, user_id, temp_token, login_id, game_name, game_toke
     if response != None:
         return response
     
+    # token choice
+    token_type ={
+        'player_token': "playerToken",
+        'master_token': "masterToken"
+    }
+
     response = {
         "gameToken": game_token,
         "loginToken": login_token,
-        query_keyname: token,
+        token_type[query_keyname]: token,
         "gameName": game_name,
         "username": username,        
     }

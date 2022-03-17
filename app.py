@@ -28,6 +28,11 @@ def get_username():
 def post_login():
     return login.post()
 
+# PATCH login - player login
+@app.patch('/api/login')
+def patch_login():
+    return login.patch()
+
 # # game requests
 # 
 
