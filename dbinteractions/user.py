@@ -4,6 +4,7 @@ from flask import Response
 import json
 import mariadb as db
 import helpers.format_response as format
+import dbinteractions.login as login
 
 
 # GET user from database
@@ -72,7 +73,9 @@ def post(username, password, salt, email, is_over_13, name=None):
     if response != None:
         return response
 
-    return Response(user_id, mimetype="plain/text", status=201)
+    return login.post(user_id, username)
+
+    return Response(str(user_id), mimetype="plain/text", status=201)
 
     if user_id != None:
         # format response

@@ -1,9 +1,12 @@
 from flask import Flask
 import sys
 import endpoints.user as user
+import endpoints.login as login
+import endpoints.game as game
 
 
 app = Flask(__name__)
+
 
 # # user requests
 # GET user
@@ -13,13 +16,25 @@ app = Flask(__name__)
 def post_user():
     return user.post()
 
+
+# # login requests
 # used for username live check
 @app.get('/api/login')
 def get_username():
     return user.check()
 
+# POST login attempt
+@app.post('/api/login')
+def post_login():
+    return login.post()
 
+# # game requests
+# 
 
+# POST game
+@app.post('/api/games')
+def post_game():
+    return game.post()
 
 
 

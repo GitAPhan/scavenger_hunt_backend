@@ -1,5 +1,4 @@
-import json
-from flask import Flask, request, Response
+from flask import request, Response
 import dbinteractions.user as user
 import helpers.verification as verify
 

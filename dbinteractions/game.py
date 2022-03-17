@@ -47,20 +47,22 @@ def get(game_id):
 
 
 # POST game to database
-def post(name, user_id, start_time=None, duration="04:00:00"):
+def post(name, user_id):
     response = None
     game_id = None
     game_token = None
 
     conn, cursor = c.connect_db()
 
+    # loop in-case of duplicate game_token
     while True:
         try:
-            game_token = secrets.token_hex(7)
+            game_token = secrets.token_hex(3)
+            print(game_token)
             # query to create a new game
             cursor.execute(
-                "INSERT INTO game (game_token, user_id, duration, start_time, name) VALUE (?,?,?,?,?)",
-                [game_token, user_id, duration, start_time, name],
+                "INSERT INTO game (game_token, user_id,  name) VALUE (?,?,?)",
+                [game_token, user_id, name],
             )
             conn.commit()
             game_id = cursor.lastrowid
@@ -81,25 +83,27 @@ def post(name, user_id, start_time=None, duration="04:00:00"):
                 )
                 break
 
-    c.disconnect_db
+    c.disconnect_db(conn, cursor)
 
     # return any value for response that isn't None
     if response != None:
-        return response
+        return False, response
 
-    # format response 
-    if game_id != None and game_token != None:
-        response = format.game([game_id, name, game_token, user_id])
-        response_json = json.dumps(response, default=str)
-        response = Response(response_json, mimetype="application/json", status=201)
+    # return token and game_id
+    return game_token, game_id
+    # # format response 
+    # if game_id != None and game_token != None:
+    #     response = format.game([game_id, name, game_token, user_id])
+    #     response_json = json.dumps(response, default=str)
+    #     response = Response(response_json, mimetype="application/json", status=201)
 
-    # None check - catch
-    if response == None:
-        response = Response(
-            "DB Error: POST game - catch", mimetype="plain/text", status=499
-        )
+    # # None check - catch
+    # if response == None:
+    #     response = Response(
+    #         "DB Error: POST game - catch", mimetype="plain/text", status=499
+    #     )
 
-    return response
+    # return response
 
 
 # PATCH game to database
@@ -148,12 +152,12 @@ def patch(game_id, start_time=None, duration=None, name=None):
     return get(game_id)
 
 
-# DELETE game in database
-def delete(game_id, user_id):
-    response = None
+# # DELETE game in database
+# def delete(game_id, user_id):
+#     response = None
 
-    conn, cursor = c.connect_db()
+#     conn, cursor = c.connect_db()
 
-    try:
-        # query request to delete game in database
-        cursor.execute("DELETE FROM game WHERE id=? AND user_id=?")
+#     try:
+#         # query request to delete game in database
+#         cursor.execute("DELETE FROM game WHERE id=? AND user_id=?")

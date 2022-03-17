@@ -10,18 +10,22 @@ def new_password(password):
     if len(password) < 8:
         return False
     # regex validation: needs to contain upper, lower, numeric, and a special character
-    if re.fullmatch(r'((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W])(?!.*[\s]).{8,64})', password):
+    if re.fullmatch(
+        r"((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W])(?!.*[\s]).{8,64})", password
+    ):
         return True
     else:
         return False
 
+
 # verify that user input username is valid
 def username(username):
     # username cannot contain a whitespace or '@' and between 8-64 characters
-    if re.fullmatch(r'(?!.[@\s])([a-zA-Z0-9\-\_\.]{8,64})', username):
+    if re.fullmatch(r"(?!.[@\s])([a-zA-Z0-9\-\_\.]{8,64})", username):
         return True
     else:
         return False
+
 
 # create salt, add to password, hash
 def create_password(password):
@@ -29,6 +33,7 @@ def create_password(password):
     password = password + salt
     hash_result = hashlib.sha512(password.encode()).hexdigest()
     return hash_result, salt
+
 
 # Grab the hashed salty password and the salt to add to the password, hash and verify
 def password(hashed_salty_password, salt, password):
@@ -40,6 +45,35 @@ def password(hashed_salty_password, salt, password):
     else:
         return False
 
+
+# verify temp token
+def tempToken(temp_token, login_id, user_id):
+    response = None
+    status = None
+
+    conn, cursor = connect_db()
+
+    try:
+        #query to select row count and verify
+        cursor.execute('SELECT COUNT(l.id), u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token=? AND l.id=? AND l.user_id=?', [temp_token, login_id, user_id])
+        status = cursor.fetchall()[0]
+        # status check
+        if status[0] != 1:
+            response = Response("unable to verify login session", mimetype="plain/text", status=403)
+    except KeyError:
+        response = 'response'
+
+    disconnect_db(conn, cursor)
+
+    if response != None:
+        return False, response
+
+    if status == None:
+        return False, Response("unable to verify login session", mimetype="plain/text", status=403)
+
+    # return back verify status and username
+    return True, status[1]
+
 # verify that the loginToken in valid
 def loginToken(loginToken):
     conn, cursor = connect_db()
@@ -48,13 +82,13 @@ def loginToken(loginToken):
 
     try:
         # query to select userId and username of user related to the loginToken
-        cursor.execute("SELECT u.id, u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token = ?", [loginToken])
+        cursor.execute(
+            "SELECT u.id, u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token = ?",
+            [loginToken],
+        )
         response = cursor.fetchall()[0]
-        user = {
-            'id': response[0],
-            'name': response[1]
-        }
-        
+        user = {"id": response[0], "username": response[1]}
+
         if isinstance(user["id"], int):
             verify_status = True
 
@@ -68,8 +102,54 @@ def loginToken(loginToken):
         user = Response("DB Error: " + str(oe), mimetype="plain/text", status=500)
         verify_status = False
     except Exception as E:
-        user = Response("Verify Error: general 'loginToken' error"+str(E), mimetype="plain/text", status=498)
+        user = Response(
+            "Verify Error: general 'loginToken' error" + str(E),
+            mimetype="plain/text",
+            status=498,
+        )
         verify_status = False
-    
-    disconnect_db(conn,cursor)
+
+    disconnect_db(conn, cursor)
     return user, verify_status
+
+
+# grab hashed_password and salt from database to be verified
+def get_hashpass(payload, type):
+    conn, cursor = connect_db()
+    result = None
+
+    # modify query
+    choices = {
+        "loginToken": "l.login_token",
+        "username": "u.username",
+        "email": "u.email",
+    }
+    query_selector = choices[type]
+    # conditional to remove innerjoin if user enters email or username
+    query_innerjoin = "inner join login l on l.user_id = u.id"
+    if type != "loginToken":
+        query_innerjoin = ""
+    query_statement = f"select u.password, u.salt, u.id from user u {query_innerjoin} where {query_selector} = ?"
+
+    try:
+        cursor.execute(query_statement, [payload])
+        result = cursor.fetchone()
+    except Exception as E:
+        return Response(
+            "DB Auth Error: GET cred -" + str(E), mimetype="plain/text", status="401"
+        )
+
+    disconnect_db(conn, cursor)
+
+    if result == None:
+        return (
+            False,
+            Response(
+                "USER: invalid authentication - 'loginToken' not found",
+                mimetype="plain/text",
+                status=401,
+            ),
+            None,
+        )
+    else:
+        return result[0], result[1], result[2]
