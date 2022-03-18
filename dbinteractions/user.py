@@ -195,3 +195,4 @@ def check(username):
         return response
     
     return Response("username is available", mimetype='plain/text', status=200)
+print(check('username'))

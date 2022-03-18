@@ -93,8 +93,8 @@ def get_hashpass(payload, type):
 
 ## TOKEN VILLE ##
 
-# verify temp token
-def tempToken(temp_token, login_id, user_id):
+# verify login token
+def loginToken(login_token, login_id, user_id):
     response = None
     status = None
 
@@ -102,7 +102,7 @@ def tempToken(temp_token, login_id, user_id):
 
     try:
         #query to select row count and verify
-        cursor.execute('SELECT COUNT(l.id), u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token=? AND l.id=? AND l.user_id=?', [temp_token, login_id, user_id])
+        cursor.execute('SELECT COUNT(l.id), u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token=? AND l.id=? AND l.user_id=?', [login_token, login_id, user_id])
         status = cursor.fetchall()[0]
         # status check
         if status[0] != 1:
@@ -120,44 +120,43 @@ def tempToken(temp_token, login_id, user_id):
 
     # return back verify status and username
     return True, status[1]
+# # verify that the loginToken in valid
+# def loginToken(loginToken):
+#     conn, cursor = connect_db()
+#     user = None
+#     verify_status = None
 
-# verify that the loginToken in valid
-def loginToken(loginToken):
-    conn, cursor = connect_db()
-    user = None
-    verify_status = None
+#     try:
+#         # query to select userId and username of user related to the loginToken
+#         cursor.execute(
+#             "SELECT u.id, u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token = ?",
+#             [loginToken],
+#         )
+#         response = cursor.fetchall()[0]
+#         user = {"id": response[0], "username": response[1]}
 
-    try:
-        # query to select userId and username of user related to the loginToken
-        cursor.execute(
-            "SELECT u.id, u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token = ?",
-            [loginToken],
-        )
-        response = cursor.fetchall()[0]
-        user = {"id": response[0], "username": response[1]}
+#         if isinstance(user["id"], int):
+#             verify_status = True
 
-        if isinstance(user["id"], int):
-            verify_status = True
+#     except TypeError:
+#         user = Response("USER: invalid 'loginToken'", mimetype="plain/text", status=401)
+#         verify_status = False
+#     except IndexError:
+#         user = Response("USER: invalid 'loginToken'", mimetype="plain/text", status=403)
+#         verify_status = False
+#     except db.OperationalError as oe:
+#         user = Response("DB Error: " + str(oe), mimetype="plain/text", status=500)
+#         verify_status = False
+#     except Exception as E:
+#         user = Response(
+#             "Verify Error: general 'loginToken' error" + str(E),
+#             mimetype="plain/text",
+#             status=498,
+#         )
+#         verify_status = False
 
-    except TypeError:
-        user = Response("USER: invalid 'loginToken'", mimetype="plain/text", status=401)
-        verify_status = False
-    except IndexError:
-        user = Response("USER: invalid 'loginToken'", mimetype="plain/text", status=403)
-        verify_status = False
-    except db.OperationalError as oe:
-        user = Response("DB Error: " + str(oe), mimetype="plain/text", status=500)
-        verify_status = False
-    except Exception as E:
-        user = Response(
-            "Verify Error: general 'loginToken' error" + str(E),
-            mimetype="plain/text",
-            status=498,
-        )
-        verify_status = False
-
-    disconnect_db(conn, cursor)
-    return user, verify_status
+#     disconnect_db(conn, cursor)
+#     return user, verify_status
 
 # verify gameToken is valid
 def gameToken(gameToken):
@@ -169,9 +168,9 @@ def gameToken(gameToken):
     try:
         # query to select game_id & game_name
         cursor.execute("SELECT id, name FROM game where game_token=?", [gameToken])
-        isValid = cursor.fetchall()[0]
+        isValid = cursor.fetchall()
         #status check
-        if not isinstance(isValid[0], int):
+        if isValid == []:
             response = Response("token is non-existant", mimetype="plain/text", status=404)
     except KeyError:
         response = "Response"
@@ -182,6 +181,35 @@ def gameToken(gameToken):
         return False, response
     if isValid != None:
         # return game_id, game_name
-        return isValid[0], isValid[1]
+        return isValid[0][0], isValid[0][1]
     # catch
     return False, Response("VerifyError: GAME_TOKEN - catch error", mimetype="plain/text", status=499)
+
+print(gameToken('dhgakelhgaogheiaehagha'))
+# verify that player's login session is valid
+def player(playerToken):
+    response = None
+    isValid = None
+
+    conn, cursor = connect_db()
+
+    try:
+        #query to select game_id and user_id from login
+        cursor.execute("SELECT game_id, user_id FROM login WHERE player_token=?", [playerToken])
+        isValid = cursor.fetchall()
+        #status check
+        if isValid == []:
+            response = Response('player token is not valid', mimetype='plain/text', status=403)
+    except KeyError:
+        response ='response'
+        # need exceptions here
+
+    disconnect_db(conn, cursor)
+
+    if response != None:
+        return False, response
+    
+    if isValid != None:
+        return isValid[0][0], isValid[0][1]
+    
+    return False, Response('playerToken auth error', mimetype="plain/text", status=499)

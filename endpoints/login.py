@@ -40,7 +40,7 @@ def patch():
 
     # input keynames
     keyname = {
-        1: "tempToken",
+        1: "loginToken",
         2: "loginId",
         3: "userId",
         4: "gameToken",
@@ -53,9 +53,9 @@ def patch():
             return Response(str(ke), mimetype="plain/text", status=500)
 
     if Request != {}:
-        # verify tempToken
-        status, username = verify.tempToken(
-            Request["tempToken"], Request["loginId"], Request["userId"]
+        # verify loginToken
+        status, username = verify.loginToken(
+            Request["loginToken"], Request["loginId"], Request["userId"]
         )
         if status:
             # verify gameToken
@@ -67,17 +67,13 @@ def patch():
                     game_id,
                     username,
                     Request["userId"],
-                    Request["tempToken"],
+                    Request["loginToken"],
                     Request["loginId"],
                     game_name,
                     Request["gameToken"],
                 )
         else:
             return username
-
-    #         response = login.player(username, Request['userId'], Request['tempToken'], Request['loginId'], Request['gameToken'])
-    #     else:
-    #         return username
 
     if response == None:
 
