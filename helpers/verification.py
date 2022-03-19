@@ -185,7 +185,6 @@ def gameToken(gameToken):
     # catch
     return False, Response("VerifyError: GAME_TOKEN - catch error", mimetype="plain/text", status=499)
 
-print(gameToken('dhgakelhgaogheiaehagha'))
 # verify that player's login session is valid
 def player(playerToken):
     response = None

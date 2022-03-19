@@ -49,7 +49,7 @@ def patch(game_id, username, user_id, login_token, login_id, game_name, game_tok
         query_keyname = 'master_token'
     else:
         query_keyname = 'player_token'
-    query_statement = f"UPDATE login SET game_id=?, login_token='', {query_keyname}=? WHERE user_id=? AND id=? AND login_token=?"
+    query_statement = f"UPDATE login SET game_id=?, login_token=null, {query_keyname}=? WHERE user_id=? AND id=? AND login_token=?"
     
     conn, cursor = c.connect_db()
 
@@ -61,7 +61,8 @@ def patch(game_id, username, user_id, login_token, login_id, game_name, game_tok
         # status check
         if status != 1:
             response = Response('DB Error: PATCH login - no changes were made in the system', mimetype="plain/text", status=400)
-    except db.IntegrityError:
+    except db.IntegrityError as IE:
+        # response = Response(str(IE), mimetype="plain/text", status=499)
         response = Response('looks like you are already logged in', mimetype="plain/text", status=400)
     except KeyError:
         response = "Response"
@@ -82,6 +83,7 @@ def patch(game_id, username, user_id, login_token, login_id, game_name, game_tok
         "gameToken": game_token,
         token_type[query_keyname]: token,
         "gameName": game_name,
+        "userId": user_id,
         "username": username,        
     }
     response_json = json.dumps(response, default=str)

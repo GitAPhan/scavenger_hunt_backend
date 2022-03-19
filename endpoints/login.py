@@ -1,4 +1,3 @@
-import re
 from flask import request, Response
 import dbinteractions.login as login
 import helpers.verification as verify

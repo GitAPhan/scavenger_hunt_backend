@@ -12,23 +12,20 @@ def get():
 
     key = {
         0: "checkToken",
-        1: "playerToken",
-        2: "gameToken"
+        1: "userId",
     }
 
     for i in range(0, len(key)):
         try:
-            data[key[i]] = request.json[key[i]]
+            data[key[i]] = request.args[key[i]]
         except KeyError as ke:
-            return Response(str(ke), mimetype="plain/text", status=500)
+            if i == 1:
+                data[key[i]] = None
+            else:
+                return Response(str(ke), mimetype="plain/text", status=500)
 
     if data != {}:
-        #verify login
-        game_id, user_id = verify.player(data['playerToken'])
-        # status check
-        if game_id == False:
-            return user_id
-        response = checkin.get(user_id, game_id, data['checkToken'])
+        response = checkin.get(data['checkToken'],data['userId'])
     
     if response == None:
         response = Response('EndpointError: GET check-in - catch', mimetype='plain/text', status=499)
@@ -37,8 +34,7 @@ def get():
 
 # POST check-in request
 def post():
-    response = None
-    r_data = {}
+    data = {}
 
     key = {
         0: "checkToken",
@@ -50,30 +46,27 @@ def post():
     
     for i in range(0, len(key)):
         try:
-            r_data[key[i]] = request.json[key[i]]
+            data[key[i]] = request.json[key[i]]
         except KeyError as ke:
-            return Response(str(ke), mimetype="plain/text", status=500)
+            return Response('KeyError: check-in POST '+str(ke), mimetype="plain/text", status=500)
     
-    if r_data != {}:
+    if data != {}:
         # verify login
-        game_id, user_id = verify.player(r_data['playerToken'])
+        game_id, user_id = verify.player(data['playerToken'])
         # verify check
         if game_id == False:
             return user_id
     
     challenge = {
-        0: rps.game(r_data['playerChoice'])
+        0: rps.game(data['playerChoice'])
     }
     # challenge results
-    score, bot_choice, plyr_choice = challenge[r_data['gameType']]
-
+    isWin, bot_choice, plyr_choice = challenge[data['gameType']]
+    score = {
+            "isWin": isWin,
+            'computer': bot_choice,
+            'player': plyr_choice
+        }
     # update database
-
-
-    response = {
-        "score": score,
-        'bot_choice': bot_choice,
-        'plyr_choice': plyr_choice
-    }
-    response_json = json.dumps(response, default=str)
-    return Response(response_json, mimetype="plain/text", status=200)
+    return checkin.post(game_id, data['checkToken'], user_id, score)
+    
