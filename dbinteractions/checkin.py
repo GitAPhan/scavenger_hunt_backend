@@ -11,14 +11,14 @@ def get(check_token, user_id=None, score=None):
 
     # let the crazy query building begin!!
     inner_join = "INNER JOIN check_in c ON c.game_id = p.game_id "
-    col_roundsPlayed = ", COUNT(c.id), "
-    col_roundsWon ="(select count(c.id) from check_in c where c.is_winner=1), "
-    col_pointsWon = "(select sum(p.point_reward) from check_in c inner join checkpoint p on p.game_id = c.game_id where c.user_id=? and c.is_winner=1), "
-    col_tokensWon = "(select sum(p.token_reward) from check_in c inner join checkpoint p on p.game_id = c.game_id where c.user_id=? and c.is_winner=1)"
-    col_isActive = ", (select if(p.rounds=count(c.id),'false','true'))"
+    col_roundsPlayed = ", (select count(c.id) from check_in c inner join checkpoint p on p.id=c.checkpoint_id where c.user_id=? and p.check_token=?), "
+    col_roundsWon ="(select count(c.id) from check_in c inner join checkpoint p on p.id=c.checkpoint_id where c.is_winner=1 and c.user_id=? and p.check_token=?), "
+    col_pointsWon = "(select sum(p.point_reward) from check_in c inner join checkpoint p on p.id = c.checkpoint_id where c.user_id=? and p.check_token=? and c.is_winner=1), "
+    col_tokensWon = "(select sum(p.token_reward) from check_in c inner join checkpoint p on p.id = c.checkpoint_id where c.user_id=? and p.check_token=? and c.is_winner=1)"
+    col_isActive = ", (select if(p.rounds=count(c.id), 0, 1) from check_in c inner join checkpoint p on p.id = c.checkpoint_id where c.user_id=? and p.check_token=?)"
     user_stats= col_roundsPlayed+col_roundsWon+col_pointsWon+col_tokensWon+col_isActive
     keyname = " AND c.user_id =?"
-    keyvalue = [user_id, user_id, check_token, user_id]
+    keyvalue = [user_id, check_token, user_id, check_token, user_id, check_token, user_id, check_token, user_id, check_token, check_token, user_id]
     if user_id == None:
         inner_join = ""
         user_stats = ""
