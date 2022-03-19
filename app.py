@@ -4,6 +4,7 @@ import endpoints.user as user
 import endpoints.login as login
 import endpoints.game as game
 import endpoints.checkin as checkin
+import endpoints.checkpoint as checkpoint
 
 
 app = Flask(__name__)
@@ -42,16 +43,28 @@ def patch_login():
 def post_game():
     return game.post()
 
-# # checkpoint requests
+# # check-in requests
 #GET check-in
 @app.get('/api/check-in')
 def get_check():
     return checkin.get()
 
+# GET check-in log
+@app.get('/api/check-in/log')
+def get_check_log():
+    return checkin.get_log()
+
 # POST check-in
 @app.post('/api/check-in')
 def post_check():
     return checkin.post()
+
+
+# # checkpoint requests
+# GET checkpoint info
+@app.get('/api/checkpoints')
+def get_checkpoint():
+    return checkpoint.get()
 
 
 

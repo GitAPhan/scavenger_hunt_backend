@@ -70,3 +70,21 @@ def post():
     # update database
     return checkin.post(game_id, data['checkToken'], user_id, score)
     
+
+# GET request for game logs
+def get_log():
+    response = None
+
+    try:
+        # input request for user_id
+        user_id = int(request.args['userId'])
+        response = checkin.get_log(user_id)
+    except KeyError:
+        return Response("KeyError: 'user_id' keyname not present", mimetype="plain/text", status=500)
+    except ValueError:
+        return Response("InputError: value entered for 'user_id' not valid", mimetype="plain/text", status=400)
+    
+    if response == None:
+        response = Response("EndpointError: GET check-in log - catch", mimetype="plain/text", status=499)
+    
+    return response
