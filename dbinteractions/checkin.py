@@ -9,7 +9,7 @@ def get(check_token, user_id=None, score=None):
     data = None
 
     # let the crazy query building begin!!
-    inner_join = "INNER JOIN check_in c ON c.game_id = p.game_id "
+    inner_join = "INNER JOIN check_in c ON c.checkpoint_id = p.id "
     col_roundsPlayed = ", (select count(c.id) from check_in c inner join checkpoint p on p.id=c.checkpoint_id where c.user_id=? and p.check_token=?), "
     col_roundsWon = "(select count(c.id) from check_in c inner join checkpoint p on p.id=c.checkpoint_id where c.is_winner=1 and c.user_id=? and p.check_token=?), "
     col_pointsWon = "(select sum(p.point_reward) from check_in c inner join checkpoint p on p.id = c.checkpoint_id where c.user_id=? and p.check_token=? and c.is_winner=1), "

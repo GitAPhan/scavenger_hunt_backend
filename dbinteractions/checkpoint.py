@@ -5,31 +5,30 @@ import mariadb as db
 
 
 # GET checkpoint info from database
-def get(game_id=None, checkpoint_id=None, check_token=None):
+def get(game_token=None, checkpoint_id=None, check_token=None):
     response = None
     checkpoints = None
 
     # query builder
-    if game_id != None and checkpoint_id == None and check_token == None:
-        keyname = "game_id"
-        keyvalue = game_id
-    elif check_token != None and game_id == None and checkpoint_id == None:
-        keyname = "check_token"
+    if game_token != None and checkpoint_id == None and check_token == None:
+        keyname = "game_id=(SELECT id FROM game WHERE game_token=?)"
+        keyvalue = game_token
+    elif check_token != None and game_token == None and checkpoint_id == None:
+        keyname = "check_token=?"
         keyvalue = check_token
-    elif checkpoint_id != None and game_id == None and check_token == None:
-        keyname = "checkpoint_id"
+    elif checkpoint_id != None and game_token == None and check_token == None:
+        keyname = "checkpoint_id=?"
         keyvalue = checkpoint_id
     else:
         return Response(
             "you must only choose one argument", mimetype="plain/text", status=400
         )
 
-    query = (f"SELECT id, token_reward, point_reward, rounds, game_type, name FROM checkpoint WHERE {keyname} =?")
+    query = (f"SELECT id, token_reward, point_reward, rounds, game_type, name FROM checkpoint WHERE {keyname}")
 
     conn, cursor = c.connect_db()
 
     try:
-        print(query)
         cursor.execute(query, [keyvalue])
         checkpoints = cursor.fetchall()
         if checkpoints == []:
