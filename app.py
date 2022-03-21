@@ -12,6 +12,9 @@ app = Flask(__name__)
 
 # # user requests
 # GET user
+@app.get('/api/users')
+def get_user():
+    return user.get()
 
 # POST user
 @app.post('/api/users')
@@ -34,6 +37,10 @@ def post_login():
 @app.patch('/api/login')
 def patch_login():
     return login.patch()
+
+@app.delete('/api/login')
+def delete_login():
+    return login.delete()
 
 # # game requests
 # 

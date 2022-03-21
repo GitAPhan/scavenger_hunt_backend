@@ -36,9 +36,9 @@ def get(user_id):
     if user != None:
         response = {
             "userId": user[0][0],
-            "username": user[1][0],
-            "name": user[2][0],
-            "email": user[3][0]
+            "username": user[0][1],
+            "name": user[0][2],
+            "email": user[0][3]
         }
 
     if response == None:

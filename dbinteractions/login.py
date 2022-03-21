@@ -1,6 +1,4 @@
-import datetime
 import secrets
-from warnings import catch_warnings
 import dbinteractions.dbinteractions as c
 from flask import Response
 import json
@@ -93,3 +91,41 @@ def patch(game_id, username, user_id, login_token, login_id, game_name, game_tok
     if response == None:
         response = Response('DbError: PATCH login - catch', mimetype='plain/text', status=499)
     return response
+
+
+# logout function
+def delete(login_token = None, player_token = None, master_token = None):
+    response = None
+
+    if login_token != None and player_token == None and master_token == None:
+        keyname = 'login_token'
+        keyvalue = [login_token]
+    elif login_token == None and player_token != None and master_token == None:
+        keyname = 'player_token'
+        keyvalue = [player_token]
+    elif login_token == None and player_token == None and master_token != None:
+        keyname = 'master_token'
+        keyvalue = [master_token]
+    else:
+        return Response("please only provide one(1) of the following: loginToken, playerToken, masterToken", mimetype="plain/text", status=400)
+    
+    query = f"DELETE FROM login WHERE {keyname}=?"
+
+    conn, cursor = c.connect_db()
+
+    try:
+        #query
+        cursor.execute(query, keyvalue)
+        conn.commit()
+        status = cursor.rowcount
+        if status != 1:
+            response = Response('LogoutError, no changed were made', mimetype="plain/text", status=400)
+    except Exception as E:
+        response = Response("LogoutError: Db exception - "+str(E), mimetype='plain/text', status=490)
+    
+    c.disconnect_db(conn, cursor)
+
+    if response != None:
+        return response
+    
+    return Response('logout successful', mimetype="plain/text", status=200)

@@ -53,6 +53,9 @@ def get_score(user_id, check_token=None, checkpoint_id=None):
     elif checkpoint_id != None:
         keyname = "id"
         keyvalue = checkpoint_id
+    else:
+        return Response("you must include either the checkpointId or checkToken in request", mimetype="plain/text", status=400)
+
     query = f"SELECT (SELECT COUNT(c.id) FROM check_in c INNER JOIN checkpoint p ON p.id=c.checkpoint_id WHERE c.user_id=? AND p.{keyname}=?), COUNT(c.id), IFNULL(sum(p.token_reward), 0), IFNULL(sum(p.point_reward),0) FROM check_in c INNER JOIN checkpoint p ON p.id = c.checkpoint_id WHERE c.user_id=? AND p.{keyname}=? AND c.is_winner=1"
 
     conn, cursor = c.connect_db()
@@ -176,9 +179,9 @@ def get_standing(game_token):
         return response
 
     response = []
-    def get_score(players):
+    def find_score(players):
         return players[2]
-    players = sorted(players, key=get_score, reverse=True)
+    players = sorted(players, key=find_score, reverse=True)
     i = 0
     for player in players:
         i += 1
@@ -230,4 +233,4 @@ def post(game_id, check_token, user_id, result):
     response = data | score
     response["lastRound"] = result
 
-    return response
+    return Response(json.dumps(response, default=str), mimetype="application/json", status=200)

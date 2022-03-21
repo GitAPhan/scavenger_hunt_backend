@@ -81,3 +81,29 @@ def patch():
         )
 
     return response
+
+
+# logout DELETE login session
+def delete():
+    try:
+        # input request for login_token
+        login_token = request.json['loginToken']
+        return login.delete(login_token=login_token)
+    except KeyError:
+        pass
+
+    try:
+        # input request for player_token
+        player_token = request.json['playerToken']
+        return login.delete(player_token=player_token)
+    except KeyError:
+        pass
+
+    try:
+        # input request for master_token
+        master_token = request.json['masterToken']
+        return login.delete(master_token=master_token)
+    except KeyError:
+        pass
+
+    return Response("EndpointError: DELETE login - nothing happened", mimetype="plain/text", status=490)

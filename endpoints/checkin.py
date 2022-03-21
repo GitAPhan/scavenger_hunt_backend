@@ -58,12 +58,26 @@ def post():
         if game_id == False:
             return user_id
 
-    challenge = {0: rps.game(data["playerChoice"])}
-    # challenge results
-    isWin, bot_choice, plyr_choice = challenge[data["gameType"]]
-    score = {"isWin": isWin, "computer": bot_choice, "player": plyr_choice}
-    # update database
-    return checkin.post(game_id, data["checkToken"], user_id, score)
+    # prevent additional entries if game is not active
+    # check to see if game is active
+    if checkin.is_active(user_id, data["checkToken"]):
+        challenge = {0: rps.game(data["playerChoice"])}
+        # challenge results
+        isWin, bot_choice, plyr_choice = challenge[data["gameType"]]
+        score = {"isWin": isWin, "computer": bot_choice, "player": plyr_choice}
+        # update database
+        return checkin.post(game_id, data["checkToken"], user_id, score)
+    
+    # get checkpoint info if game is completed
+    data = checkpoint.get(check_token=data["checkToken"])
+    if type(data) is not dict:
+        return data
+    score = checkin.get_score(user_id, data["checkToken"])
+    if type(score) is not dict:
+        return score
+    response = data | score
+    response_json = json.dumps(response, default=str)
+    return Response(response_json, mimetype='application/json', status=200)
 
 
 # GET request for game logs
