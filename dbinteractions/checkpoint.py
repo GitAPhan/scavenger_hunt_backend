@@ -17,7 +17,7 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
         keyname = "check_token=?"
         keyvalue = check_token
     elif checkpoint_id != None and game_token == None and check_token == None:
-        keyname = "checkpoint_id=?"
+        keyname = "id=?"
         keyvalue = checkpoint_id
     else:
         return Response(
@@ -61,6 +61,9 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
             for i in range(0,len(checkpoint)):
                 set[key[i]] = checkpoint[i]
             response.append(set)
+        # return object if check_token is present
+        if check_token != None or checkpoint_id != None:
+            return response[0]
         response_json = json.dumps(response, default=str)
         response = Response(response_json, mimetype="application/json", status=200)
     

@@ -54,6 +54,10 @@ def get_check():
 def get_check_log():
     return checkin.get_log()
 
+@app.get('/api/check-in/standing')
+def get_standing():
+    return checkin.get_standing()
+
 # POST check-in
 @app.post('/api/check-in')
 def post_check():

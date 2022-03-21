@@ -32,4 +32,5 @@ def disconnect_db(conn, cursor):
         print(e)
         print("Db Connection Error: conn close error")
 
- 
+class NothingToReturn(Exception):
+    pass

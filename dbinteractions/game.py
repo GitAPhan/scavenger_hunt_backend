@@ -42,7 +42,34 @@ def get(game_id):
         response = Response(
             "DB Error: GET game - catch", mimetype="plain/text", status=499
         )
+    return response
 
+
+# GET all players user_id
+def get_player(game_token):
+    response = None
+    players = None
+
+    conn, cursor = c.connect_db()
+
+    try:
+        # query to select all players in game
+        cursor.execute('SELECT DISTINCT user_id FROM login WHERE game_id=(SELECT id FROM game WHERE game_token=?)', [game_token])
+        players = cursor.fetchall()
+        if players == []:
+            response = Response('no players associated with this game', mimetype="plain/text", status=400)
+    except Exception as E:
+        response = Response('DbError: GET_PLAYER game - '+str(E), mimetype="plain/text", status=490)
+    
+    c.disconnect_db(conn, cursor)
+
+    if players != None:
+        response = []
+        for player in players:
+            response.append(player[0])
+    
+    if response == None:
+        response = Response('DbError: GET_PLAYER game - catch', mimetype='plain/text', status=490)
     return response
 
 
