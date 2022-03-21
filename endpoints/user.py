@@ -1,3 +1,4 @@
+import json
 from flask import request, Response
 import dbinteractions.user as user
 import helpers.verification as verify
@@ -11,14 +12,14 @@ def get():
         # input request user_id
         user_id = request.args['userId']
         # request to database
-        response = db.get(user_id)
+        response = user.get(user_id)
+        if type(response) is not dict:
+            return response
+        return Response(json.dumps(response, default=str), mimetype="application/json", status=200)
     except KeyError:
         return Response("Endpoint Error: GET user - 'userId' keyname not present", mimetype="plain/text", status=500)
-
-    if response == None:
-        response = Response("Endpoint Error: GET user - catch", mimetype="plain/text", status=499)
-
-    return response    
+    except Exception as e:
+        return Response("EndpointError: GET user - "+str(e), mimetype="plain/text", status=490)
 
 
 # POST user request
@@ -44,7 +45,7 @@ def post():
         except KeyError as ke:
             print(ke)
             if i == 5:
-                i = 4
+                keyvalue[keyname[i]] = None
                 pass
             else:
                 return Response("KeyError: '"+keyname[i]+"' keyname not present", mimetype="plain/text", status=500)
@@ -52,13 +53,9 @@ def post():
         # more exceptions needed
     
     # hash password
-    keyvalue[keyname[4]], keyvalue[keyname[6]] = verify.create_password(keyvalue['password'])
-
-    if i == 4:
-        response = user.post(keyvalue[keyname[1]], keyvalue[keyname[4]], keyvalue[keyname[6]], keyvalue[keyname[2]], keyvalue[keyname[3]] )
-    else:
-        response = user.post(keyvalue[keyname[1]], keyvalue[keyname[4]], keyvalue[keyname[6]], keyvalue[keyname[2]], keyvalue[keyname[3]], name=keyvalue[keyname[5]] )
-
+    keyvalue['password'], keyvalue['salt'] = verify.create_password(keyvalue['password'])
+    if isinstance(keyvalue['password'], str) and isinstance(keyvalue['salt'], str):
+        response = user.post(keyvalue['username'], keyvalue['password'], keyvalue['salt'], keyvalue['email'], keyvalue['isOver13'], name=keyvalue['displayName'] )
 
     if response == None:
         response = Response("Endpoint Error: POST user - catch", mimetype="plain/text", status=499)

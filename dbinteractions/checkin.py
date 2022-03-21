@@ -186,7 +186,7 @@ def get_standing(game_token):
             "standing": i,
             "userId": player[0],
             "username": player[1],
-            "score": player[2] 
+            "score": player[2], 
         }
         response.append(card)
     return Response(json.dumps(response, default=str), mimetype="plain/text", status=200)

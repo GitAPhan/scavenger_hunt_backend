@@ -7,39 +7,42 @@ import helpers.format_response as format
 import dbinteractions.login as login
 
 
-# GET user from database
+# GET specific user's profile from database
 def get(user_id):
     response = None
-    users = None
+    user = None
 
     conn, cursor = c.connect_db()
 
     try:
         # query to select from database
         cursor.execute(
-            "SELECT id, username, name, email, birthdate, created_at FROM user WHERE user_id=?",
+            "SELECT id, username, name, email FROM user WHERE id=?",
             [user_id],
         )
-        users = cursor.fetchall()
+        user = cursor.fetchall()
+        if type(user) is not list:
+            response = Response('DbError: GET user - no profile matched the user_id')
     except Exception as e:
+        response = Response('DbError: GET user - '+str(e), mimetype="plain/text", status=490)
             # NEED EXCEPTIONS
         print(e)
 
     c.disconnect_db(conn, cursor)
 
-    if users != None:
-        response = []
-        # format response
-        for user in users:
-            x = format.user(user)
-            response.append(x)
-        response_json = json.dumps(response, default=str)
-        response = Response(response_json, mimetype="application/json", status=200)
+    if response != None:
+        return response
+
+    if user != None:
+        response = {
+            "userId": user[0][0],
+            "username": user[1][0],
+            "name": user[2][0],
+            "email": user[3][0]
+        }
 
     if response == None:
-        response = Response(
-            "DB Error: GET user - catch", mimetype="plain/text", status=499
-        )
+        response = Response("DB Error: GET user - catch", mimetype="plain/text", status=499)
 
     return response
 
@@ -74,24 +77,6 @@ def post(username, password, salt, email, is_over_13, name=None):
         return response
 
     return login.post(user_id, username)
-
-    return Response(str(user_id), mimetype="plain/text", status=201)
-
-    if user_id != None:
-        # format response
-        response = format.user(
-            [user_id, username, name, email, is_over_13, datetime.datetime.now()]
-        )
-        response_json = json.dumps(response, default=str)
-        response = Response(response_json, mimetype="application/json", status=201)
-
-    # None check - catch
-    if response == None:
-        response = Response(
-            "DB Error: POST user - catch", mimetype="plain/text", status=499
-        )
-
-    return response
 
 
 # PATCH user from database

@@ -46,9 +46,6 @@ def password(hashed_salty_password, salt, password):
         return False
 
 
-
-
-
 # grab hashed_password and salt from database to be verified
 def get_hashpass(payload, type):
     conn, cursor = connect_db()
@@ -71,8 +68,14 @@ def get_hashpass(payload, type):
         cursor.execute(query_statement, [payload])
         result = cursor.fetchone()
     except Exception as E:
-        return Response(
-            "DB Auth Error: GET cred -" + str(E), mimetype="plain/text", status="401"
+        return (
+            False,
+            Response(
+                "DB Auth Error: GET cred -" + str(E),
+                mimetype="plain/text",
+                status="401",
+            ),
+            None,
         )
 
     disconnect_db(conn, cursor)
@@ -101,14 +104,19 @@ def loginToken(login_token, login_id, user_id):
     conn, cursor = connect_db()
 
     try:
-        #query to select row count and verify
-        cursor.execute('SELECT COUNT(l.id), u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token=? AND l.id=? AND l.user_id=?', [login_token, login_id, user_id])
+        # query to select row count and verify
+        cursor.execute(
+            "SELECT COUNT(l.id), u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token=? AND l.id=? AND l.user_id=?",
+            [login_token, login_id, user_id],
+        )
         status = cursor.fetchall()[0]
         # status check
         if status[0] != 1:
-            response = Response("unauthorized operation", mimetype="plain/text", status=403)
+            response = Response(
+                "unauthorized operation", mimetype="plain/text", status=403
+            )
     except KeyError:
-        response = 'response'
+        response = "response"
 
     disconnect_db(conn, cursor)
 
@@ -116,47 +124,13 @@ def loginToken(login_token, login_id, user_id):
         return False, response
 
     if status == None:
-        return False, Response("unable to verify login session", mimetype="plain/text", status=403)
+        return False, Response(
+            "unable to verify login session", mimetype="plain/text", status=403
+        )
 
     # return back verify status and username
     return True, status[1]
-# # verify that the loginToken in valid
-# def loginToken(loginToken):
-#     conn, cursor = connect_db()
-#     user = None
-#     verify_status = None
 
-#     try:
-#         # query to select userId and username of user related to the loginToken
-#         cursor.execute(
-#             "SELECT u.id, u.username FROM login l INNER JOIN user u ON u.id = l.user_id WHERE l.login_token = ?",
-#             [loginToken],
-#         )
-#         response = cursor.fetchall()[0]
-#         user = {"id": response[0], "username": response[1]}
-
-#         if isinstance(user["id"], int):
-#             verify_status = True
-
-#     except TypeError:
-#         user = Response("USER: invalid 'loginToken'", mimetype="plain/text", status=401)
-#         verify_status = False
-#     except IndexError:
-#         user = Response("USER: invalid 'loginToken'", mimetype="plain/text", status=403)
-#         verify_status = False
-#     except db.OperationalError as oe:
-#         user = Response("DB Error: " + str(oe), mimetype="plain/text", status=500)
-#         verify_status = False
-#     except Exception as E:
-#         user = Response(
-#             "Verify Error: general 'loginToken' error" + str(E),
-#             mimetype="plain/text",
-#             status=498,
-#         )
-#         verify_status = False
-
-#     disconnect_db(conn, cursor)
-#     return user, verify_status
 
 # verify gameToken is valid
 def gameToken(gameToken):
@@ -169,12 +143,14 @@ def gameToken(gameToken):
         # query to select game_id & game_name
         cursor.execute("SELECT id, name FROM game where game_token=?", [gameToken])
         isValid = cursor.fetchall()
-        #status check
+        # status check
         if isValid == []:
-            response = Response("token is non-existant", mimetype="plain/text", status=404)
+            response = Response(
+                "token is non-existant", mimetype="plain/text", status=404
+            )
     except KeyError:
         response = "Response"
-    
+
     disconnect_db(conn, cursor)
 
     if response != None:
@@ -183,7 +159,10 @@ def gameToken(gameToken):
         # return game_id, game_name
         return isValid[0][0], isValid[0][1]
     # catch
-    return False, Response("VerifyError: GAME_TOKEN - catch error", mimetype="plain/text", status=499)
+    return False, Response(
+        "VerifyError: GAME_TOKEN - catch error", mimetype="plain/text", status=499
+    )
+
 
 # verify that player's login session is valid
 def player(playerToken):
@@ -193,22 +172,26 @@ def player(playerToken):
     conn, cursor = connect_db()
 
     try:
-        #query to select game_id and user_id from login
-        cursor.execute("SELECT game_id, user_id FROM login WHERE player_token=?", [playerToken])
+        # query to select game_id and user_id from login
+        cursor.execute(
+            "SELECT game_id, user_id FROM login WHERE player_token=?", [playerToken]
+        )
         isValid = cursor.fetchall()
-        #status check
+        # status check
         if isValid == []:
-            response = Response('player token is not valid', mimetype='plain/text', status=403)
+            response = Response(
+                "player token is not valid", mimetype="plain/text", status=403
+            )
     except KeyError:
-        response ='response'
+        response = "response"
         # need exceptions here
 
     disconnect_db(conn, cursor)
 
     if response != None:
         return False, response
-    
+
     if isValid != None:
         return isValid[0][0], isValid[0][1]
-    
-    return False, Response('playerToken auth error', mimetype="plain/text", status=499)
+
+    return False, Response("playerToken auth error", mimetype="plain/text", status=499)
