@@ -1,4 +1,3 @@
-from select import select
 import dbinteractions.dbinteractions as c
 from flask import Response
 import json
