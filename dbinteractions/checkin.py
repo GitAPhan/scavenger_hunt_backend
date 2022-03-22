@@ -84,8 +84,8 @@ def get_score(user_id, check_token=None, checkpoint_id=None):
         response = {
             "roundsPlayed": score[0][0],
             "roundsWon": score[0][1],
-            "tokensWon": score[0][2],
-            "pointsWon": score[0][3],
+            "tokensWon": int(score[0][2]),
+            "pointsWon": int(score[0][3]),
         }
         if is_active(user_id, check_token, checkpoint_id):
             response["isActive"] = 1

@@ -71,3 +71,10 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
         response = Response("DbError: GET checkpoint - catch", mimetype="plain/text", status=499)
     
     return response
+
+# create checkpoints (only GM has permission)
+def post():
+    response = None
+
+    key = ['masterToken', 'gameToken', 'checkpoint'] #checkpoint will be an array of objects
+    
