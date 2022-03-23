@@ -1,5 +1,4 @@
 import json
-from tkinter import N
 from flask import request, Response
 import helpers.verification as verify
 import challenges.r_p_s as rps
