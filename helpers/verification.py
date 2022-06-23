@@ -84,7 +84,7 @@ def get_hashpass(payload, type):
         return (
             False,
             Response(
-                "USER: invalid authentication - 'loginToken' not found",
+                "Authentication Error - invalid login credentials",
                 mimetype="plain/text",
                 status=401,
             ),
