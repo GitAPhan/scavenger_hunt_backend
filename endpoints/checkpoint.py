@@ -25,3 +25,20 @@ def get():
         return checkpoint.get(game_token=data['gameToken'])
 
     return Response('EndpointError: GET checkpoint - catch', mimetype="plain/text", status=490)
+
+def get_checkpoint_status():
+    response = None
+    
+    try:
+        user_id = request.args['userId']
+        
+        response = checkpoint.get_checkpoint_status(user_id)
+    except KeyError:
+        return Response("KeyError: get_checkpoint_status - 'userId' not present", mimetype='plain/text', status=500)
+    except Exception as E:
+        return Response("EndpointError: get_checkpoint_status - "+str(E), mimetype='plain/text', status=490)
+    
+    if response == None:
+        return Response("EndpointError: get_checkpoint_status - catch error", mimetype='plain/text', status=480)
+    
+    return response
