@@ -49,7 +49,7 @@ def patch():
         try:
             Request[keyname[i]] = request.json[keyname[i]]
         except KeyError as ke:
-            return Response(str(ke), mimetype="plain/text", status=500)
+            return Response("KeyError"+str(ke), mimetype="plain/text", status=500)
 
     if Request != {}:
         # verify loginToken
