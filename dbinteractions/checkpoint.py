@@ -3,6 +3,44 @@ from flask import Response
 import json
 import mariadb as db
 
+# GET info on all unfinished checkpoints
+def get_checkpoint_status(user_id):
+    response = None
+    open_checkpoints = []
+
+    #get all checkpoints associated with user
+    conn, cursor = c.connect_db()
+
+    try:
+        cursor.execute("SELECT DISTINCT checkpoint_id from check_in where user_id=?",[user_id])
+        checkpoints = cursor.fetchall()
+        if checkpoints == []:
+            response = Response("no checkpoints are associated with user_id", mimetype='plain/text', status=204)
+    except Exception as E:
+        response = Response("DbError: get_checkpoint_status - "+str(E), mimetype='plain/text', status=480)
+
+    if response == None:
+        try:
+            for checkpoint in checkpoints:
+                cursor.execute("SELECT IF(COUNT(ci.id)=c.rounds, 'done', c.check_token) from check_in ci inner join checkpoint c on c.id = ci.checkpoint_id where c.id=? and ci.user_id=?", [checkpoint[0], user_id])
+                status = cursor.fetchone()
+                # grab checkpoint info if game is still open
+                if status[0] != 'done': 
+                    open_checkpoints.append(status[0])
+        except Exception as E:
+            response = Response("DbError: get_checkpoint_status - "+str(E), mimetype='plain/text', status=480)
+
+    c.disconnect_db(conn, cursor)
+
+    if response != None:
+        return response
+
+    # return open_checkpoints
+    open_checkpoints_json = json.dumps(open_checkpoints, default=str)
+    return Response(open_checkpoints_json, mimetype='application/json', status=200)
+
+# print(get_checkpoint_status(16)) 
+            
 
 # GET checkpoint info from database
 def get(game_token=None, checkpoint_id=None, check_token=None):
