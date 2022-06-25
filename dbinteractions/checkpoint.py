@@ -22,11 +22,15 @@ def get_checkpoint_status(user_id):
     if response == None:
         try:
             for checkpoint in checkpoints:
-                cursor.execute("SELECT IF(COUNT(ci.id)=c.rounds, 'done', c.check_token) from check_in ci inner join checkpoint c on c.id = ci.checkpoint_id where c.id=? and ci.user_id=?", [checkpoint[0], user_id])
-                status = cursor.fetchone()
+                cursor.execute("SELECT IF(COUNT(ci.id)=c.rounds, 'done', c.check_token), c.name from check_in ci inner join checkpoint c on c.id = ci.checkpoint_id where c.id=? and ci.user_id=?", [checkpoint[0], user_id])
+                status = cursor.fetchall()
                 # grab checkpoint info if game is still open
-                if status[0] != 'done': 
-                    open_checkpoints.append(status[0])
+                if status[0][0] != 'done':
+                    checkpoint_info = {
+                        "check_token": status[0][0],
+                        "name": status[0][1],
+                    }
+                    open_checkpoints.append(checkpoint_info)
         except Exception as E:
             response = Response("DbError: get_checkpoint_status - "+str(E), mimetype='plain/text', status=480)
 
@@ -39,8 +43,8 @@ def get_checkpoint_status(user_id):
     open_checkpoints_json = json.dumps(open_checkpoints, default=str)
     return Response(open_checkpoints_json, mimetype='application/json', status=200)
 
+# FOR TESTING ONLY
 # print(get_checkpoint_status(16)) 
-            
 
 # GET checkpoint info from database
 def get(game_token=None, checkpoint_id=None, check_token=None):

@@ -77,6 +77,11 @@ def post_check():
 def get_checkpoint():
     return checkpoint.get()
 
+# GET checkpoint status
+@app.get('/api/checkpoints/status')
+def get_checkpoint_status():
+    return checkpoint.get_checkpoint_status()
+
 
 
 # ## RUN MODE SETTINGS ##
