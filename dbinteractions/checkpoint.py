@@ -8,31 +8,45 @@ def get_checkpoint_status(user_id):
     response = None
     open_checkpoints = []
 
-    #get all checkpoints associated with user
+    # get all checkpoints associated with user
     conn, cursor = c.connect_db()
 
     try:
-        cursor.execute("SELECT DISTINCT checkpoint_id from check_in where user_id=?",[user_id])
+        cursor.execute(
+            "SELECT DISTINCT checkpoint_id from check_in where user_id=?", [user_id]
+        )
         checkpoints = cursor.fetchall()
-        if checkpoints == []:
-            response = Response("no checkpoints are associated with user_id", mimetype='plain/text', status=204)
+        # if checkpoints == []:
+        #     response = Response("no checkpoints are associated with user_id", mimetype='plain/text', status=204)
     except Exception as E:
-        response = Response("DbError: get_checkpoint_status - "+str(E), mimetype='plain/text', status=480)
+        response = Response(
+            "DbError: get_checkpoint_status - " + str(E),
+            mimetype="plain/text",
+            status=480,
+        )
 
     if response == None:
         try:
             for checkpoint in checkpoints:
-                cursor.execute("SELECT IF(COUNT(ci.id)=c.rounds, 'done', c.check_token), c.name from check_in ci inner join checkpoint c on c.id = ci.checkpoint_id where c.id=? and ci.user_id=?", [checkpoint[0], user_id])
+                cursor.execute(
+                    "SELECT IF(COUNT(ci.id)=c.rounds, 'done', c.check_token), c.name, c.id from check_in ci inner join checkpoint c on c.id = ci.checkpoint_id where c.id=? and ci.user_id=?",
+                    [checkpoint[0], user_id],
+                )
                 status = cursor.fetchall()
                 # grab checkpoint info if game is still open
-                if status[0][0] != 'done':
+                if status[0][0] != "done":
                     checkpoint_info = {
                         "check_token": status[0][0],
                         "name": status[0][1],
+                        "checkpoint_id": status[0][2],
                     }
                     open_checkpoints.append(checkpoint_info)
         except Exception as E:
-            response = Response("DbError: get_checkpoint_status - "+str(E), mimetype='plain/text', status=480)
+            response = Response(
+                "DbError: get_checkpoint_status - " + str(E),
+                mimetype="plain/text",
+                status=480,
+            )
 
     c.disconnect_db(conn, cursor)
 
@@ -41,10 +55,11 @@ def get_checkpoint_status(user_id):
 
     # return open_checkpoints
     open_checkpoints_json = json.dumps(open_checkpoints, default=str)
-    return Response(open_checkpoints_json, mimetype='application/json', status=200)
+    return Response(open_checkpoints_json, mimetype="application/json", status=200)
+
 
 # FOR TESTING ONLY
-# print(get_checkpoint_status(16)) 
+# print(get_checkpoint_status(16))
 
 # GET checkpoint info from database
 def get(game_token=None, checkpoint_id=None, check_token=None):
@@ -66,7 +81,7 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
             "you must only choose one argument", mimetype="plain/text", status=400
         )
 
-    query = (f"SELECT id, token_reward, point_reward, rounds, game_type, name FROM checkpoint WHERE {keyname}")
+    query = f"SELECT id, token_reward, point_reward, rounds, game_type, name FROM checkpoint WHERE {keyname}"
 
     conn, cursor = c.connect_db()
 
@@ -78,7 +93,11 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
     except KeyError:
         response = "Response"
     except Exception as E:
-        response = Response("DbError: GET checkpoint - exception catch"+str(E), mimetype="plain/text", status=480)
+        response = Response(
+            "DbError: GET checkpoint - exception catch" + str(E),
+            mimetype="plain/text",
+            status=480,
+        )
 
     # need more exceptions
 
@@ -100,7 +119,7 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
         ]
         for checkpoint in checkpoints:
             set = {}
-            for i in range(0,len(checkpoint)):
+            for i in range(0, len(checkpoint)):
                 set[key[i]] = checkpoint[i]
             response.append(set)
         # return object if check_token is present
@@ -108,15 +127,21 @@ def get(game_token=None, checkpoint_id=None, check_token=None):
             return response[0]
         response_json = json.dumps(response, default=str)
         response = Response(response_json, mimetype="application/json", status=200)
-    
+
     if response == None:
-        response = Response("DbError: GET checkpoint - catch", mimetype="plain/text", status=499)
-    
+        response = Response(
+            "DbError: GET checkpoint - catch", mimetype="plain/text", status=499
+        )
+
     return response
+
 
 # create checkpoints (only GM has permission)
 def post():
     response = None
 
-    key = ['masterToken', 'gameToken', 'checkpoint'] #checkpoint will be an array of objects
-    
+    key = [
+        "masterToken",
+        "gameToken",
+        "checkpoint",
+    ]  # checkpoint will be an array of objects
