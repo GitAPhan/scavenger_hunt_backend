@@ -88,11 +88,13 @@ def check():
 def demo():
     response = None
 
+    name = request.json['name']
+
     # create demo account
-    demo_account = user.demo()
+    status, demo_account = user.demo(name)
 
     # sign into demo game
-    demo_game = login.demo()
+    demo_game = login.demo(user_id=demo_account[userId])
 
     # create demo check-in
     demo_check_in = checkin.demo()
