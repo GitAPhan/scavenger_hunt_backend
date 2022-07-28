@@ -1,4 +1,6 @@
 import datetime
+
+from colorama import Cursor
 import dbinteractions.dbinteractions as c
 from flask import Response
 import json
@@ -107,7 +109,7 @@ def patch(user_id, username=None, email=None, birthdate=None, name=None):
         # query to edit user
         cursor.execute(query_statement, query_keyname)
         conn.commit()
-        status = cursor.commit()
+        status = cursor.rowcount
         # status check
         if status != 1:
             response = Response(
@@ -180,3 +182,56 @@ def check(username):
         return response
     
     return Response("username is available", mimetype='plain/text', status=200)
+
+# create demo account
+def demo(name):
+    class IdCheckError(Exception):
+        pass
+
+    response = None
+    profile = None
+
+    conn, cursor = c.connect_db()
+
+    try:
+        # find oldest modified demo and modify
+        cursor.execute("select id from user where id>=30 and id<40 order by created_at asc limit 1")
+        user_id = cursor.fetchone()[0]
+        if not isinstance(user_id, int):
+            print('select')
+            raise IdCheckError
+        # # UPDATE user SET name="user", created_at=now() where id=(select id from user where id>=30 and id<40 order by created_at asc limit 1)
+        cursor.execute("UPDATE user SET name=?, created_at=now() where id=?", [name, user_id])
+        conn.commit()
+        status = cursor.rowcount
+        if status != 1:
+            print('update')
+            raise IdCheckError
+
+        # return user profile
+        # # SELECT 
+        cursor.execute(
+            "SELECT id, username, name, email FROM user WHERE id=?",
+            [user_id],
+        )
+        profile = cursor.fetchone()
+        if type(profile) is not tuple:
+            print('get', type(profile))
+            raise IdCheckError
+    except IdCheckError:
+        response = Response("no demo id found", mimetype='plain/text', status=480)
+    
+    c.disconnect_db(conn, cursor)
+
+    if response != None:
+        return False, response
+
+    if profile != None:
+        response = {
+            "userId": profile[0],
+            "username": profile[1],
+            "name": profile[2],
+            "email": profile[3]
+        }
+    
+    return True, response

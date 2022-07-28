@@ -21,6 +21,10 @@ def get_user():
 def post_user():
     return user.post()
 
+@app.post('/api/users/demo')
+def demp_user():
+    return user.demo()
+
 
 # # login requests
 # used for username live check

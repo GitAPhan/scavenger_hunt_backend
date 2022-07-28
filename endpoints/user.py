@@ -1,6 +1,8 @@
 import json
 from flask import request, Response
+import dbinteractions.checkin as checkin
 import dbinteractions.user as user
+import dbinteractions.login as login
 import helpers.verification as verify
 
 
@@ -78,3 +80,21 @@ def check():
     if response == None:
         response = Response('username does not meet requirements', mimetype='plain/text', status=400)
     return response
+
+# DEMO
+# create demo account in database
+# sign account into game
+# create demo check-in to represent played, open and new games
+def demo():
+    response = None
+
+    # create demo account
+    demo_account = user.demo()
+
+    # sign into demo game
+    demo_game = login.demo()
+
+    # create demo check-in
+    demo_check_in = checkin.demo()
+
+     

@@ -233,3 +233,4 @@ def post(game_id, check_token, user_id, result):
     response["lastRound"] = result
 
     return Response(json.dumps(response, default=str), mimetype="application/json", status=200)
+
