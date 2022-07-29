@@ -4,6 +4,7 @@ import json
 import mariadb as db
 import dbinteractions.checkpoint as checkpoint
 import dbinteractions.game as game
+from random import randint
 
 
 # is game active check
@@ -234,3 +235,43 @@ def post(game_id, check_token, user_id, result):
 
     return Response(json.dumps(response, default=str), mimetype="application/json", status=200)
 
+
+# create demo game results
+def demo(user_id):
+    response = None
+    
+    conn, cursor = c.connect_db()
+
+    try:
+        # delete all old records
+        cursor.execute("DELETE FROM check_in WHERE user_id=? AND game_id=3",[user_id])
+        conn.commit()
+
+        # create new game results
+        # INSERT INTO check_in (game_id, checkpoint_id, user_id, is_winner) VALUE (3,?,?,?)
+
+        # id    checkpoint  rounds  play
+        # 1     mt. fuji    3       3
+        # 2     everest     3       2
+        # 4     helena      6       1
+        # 5     george      3       2
+        checkpoint_ids = [{"id": 1, "rounds": 3},{"id": 2, "rounds": 2},{"id": 4, "rounds": 1},{"id": 5, "rounds": 2},]
+
+        for check in checkpoint_ids:
+            for i in range(check["rounds"]):
+                match_result = randint(0,2)-1
+                cursor.execute("INSERT INTO check_in (game_id, checkpoint_id, user_id, is_winner) VALUE (3,?,?,?)", [check["id"], user_id, match_result])
+                conn.commit()
+                if cursor.rowcount<1:
+                    response = False
+                print(check["id"], user_id, match_result, cursor.rowcount, i)
+
+    except Exception as E:
+        response = Response("demo create game result - "+str(E), mimetype="plain/text", status="490")
+
+    c.disconnect_db(conn, cursor)
+
+    if response != None:
+        return False
+    
+    return True

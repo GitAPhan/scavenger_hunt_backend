@@ -88,15 +88,39 @@ def check():
 def demo():
     response = None
 
-    name = request.json['name']
+    try:
 
-    # create demo account
-    status, demo_account = user.demo(name)
+        name = request.json['name']
 
-    # sign into demo game
-    demo_game = login.demo(user_id=demo_account[userId])
+        # create demo account
+        status, demo_account = user.demo(name)
+        if not status:
+            raise Exception("user")
 
-    # create demo check-in
-    demo_check_in = checkin.demo()
+        # sign into demo game
+        status, demo_game = login.demo(user_id=demo_account["userId"], name=name)
+        if not status:
+            raise Exception("game")
 
-     
+        # create demo check-in
+        status = checkin.demo(demo_game["userId"])
+        if not status:
+            raise Exception("checkin")
+
+    except KeyError:
+        return Response("KeyError", mimetype="plain/text", status=490)
+    except Exception as E:
+        return Response("General Error - Demo "+str(E), mimetype='plain/text', status=490)
+
+    response = {
+        "gameToken": demo_game["gameToken"],
+        "playerToken": demo_game["playerToken"],
+        "gameName": demo_game["gameName"],
+        "userId": demo_game["userId"],
+        "username": demo_game["username"]
+    }
+
+    response_json = json.dumps(response, default=str)
+    response = Response(response_json, mimetype="application/json", status=200)
+
+    return response

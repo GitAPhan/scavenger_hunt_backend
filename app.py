@@ -22,7 +22,7 @@ def post_user():
     return user.post()
 
 @app.post('/api/users/demo')
-def demp_user():
+def demo_user():
     return user.demo()
 
 

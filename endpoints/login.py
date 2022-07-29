@@ -44,7 +44,7 @@ def patch():
         3: "userId",
         4: "gameToken",
     }
-
+    
     for i in range(1, len(keyname) + 1):
         try:
             Request[keyname[i]] = request.json[keyname[i]]

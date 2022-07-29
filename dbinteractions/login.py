@@ -130,7 +130,7 @@ def delete(login_token = None, player_token = None, master_token = None):
     
     return Response('logout successful', mimetype="plain/text", status=200)
 
-def demo(user_id):
+def demo(user_id, name):
     class DemoLoginError(Exception):
         pass
 
@@ -139,16 +139,39 @@ def demo(user_id):
     conn, cursor = c.connect_db()
 
     try:
-        # delete login info
+        # delete existing login info
         # DELETE FROM login WHERE user_id=? and game_id=3
         cursor.execute("DELETE FROM login WHERE user_id=? and game_id=3", [user_id])
         conn.commit()
+        #assume works
+
+        # status = cursor.rowcount
+        # if status < 1:
+        #     print("Delete demo login info")
+        #     raise DemoLoginError("Delete demo login info")
+
+        # login to game
+        player_token = secrets.token_urlsafe(64)
+        # INSERT INTO login (user_id, game_id, player_token) VALUE (?,3,?),[user_id, player_token]
+        cursor.execute("INSERT INTO login (user_id, game_id, player_token) VALUE (?,3,?)",[user_id, player_token])
+        conn.commit()
         status = cursor.rowcount
         if status < 1:
-            raise DemoLoginError("Delete demo login info")
-        # login to game
-        # INSERT INTO login (user_id, game_id, player_token) VALUE (?,3,?),[user_id, player_token]
-        player_token = secrets.token_urlsafe(64)
+            print("Insert login info")
+            raise DemoLoginError("Insert login info")     
         
     except DemoLoginError as err:
         response = Response(err, mimetype='plain/text', status=470)
+
+    if response != None:
+        return False, response
+
+    response = {
+        "gameToken": "demo01",
+        "playerToken": player_token,
+        "gameName": "Demo",
+        "userId": user_id,
+        "username": name,
+    }
+
+    return True, response
